@@ -1,0 +1,7 @@
+No change to .github/workflows/terraform.yml is required for the bootstrap split.
+
+Reason:
+- the workload pipeline already targets environments/, modules/, and the workflow file itself
+- bootstrap should not auto-apply in the normal workload release path
+
+Recommended: keep bootstrap manual and separate from the workload CI/CD lifecycle.

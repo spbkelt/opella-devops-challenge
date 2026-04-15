@@ -1,0 +1,618 @@
+MacBookPro:prod dzolotnikov$ terraform apply
+Acquiring state lock. This may take a few moments...
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # azurerm_linux_virtual_machine.this will be created
+  + resource "azurerm_linux_virtual_machine" "this" {
+      + admin_username                                         = "azureuser"
+      + allow_extension_operations                             = true
+      + bypass_platform_safety_checks_on_user_schedule_enabled = false
+      + computer_name                                          = "vm-cus-prod-001"
+      + disable_password_authentication                        = true
+      + disk_controller_type                                   = (known after apply)
+      + extensions_time_budget                                 = "PT1H30M"
+      + id                                                     = (known after apply)
+      + location                                               = "centralus"
+      + max_bid_price                                          = -1
+      + name                                                   = "vm-opella-prod-centralus-001"
+      + network_interface_ids                                  = (known after apply)
+      + patch_assessment_mode                                  = "ImageDefault"
+      + patch_mode                                             = "ImageDefault"
+      + platform_fault_domain                                  = -1
+      + priority                                               = "Regular"
+      + private_ip_address                                     = (known after apply)
+      + private_ip_addresses                                   = (known after apply)
+      + provision_vm_agent                                     = true
+      + public_ip_address                                      = (known after apply)
+      + public_ip_addresses                                    = (known after apply)
+      + resource_group_name                                    = "rg-opella-prod-centralus-001"
+      + size                                                   = "Standard_D2s_v3"
+      + tags                                                   = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "owner"       = "platform-team"
+          + "project"     = "opella"
+          + "region"      = "centralus"
+        }
+      + virtual_machine_id                                     = (known after apply)
+      + vm_agent_platform_updates_enabled                      = false
+
+      + admin_ssh_key {
+          + public_key = (known after apply)
+          + username   = "azureuser"
+        }
+
+      + os_disk {
+          + caching                   = "ReadWrite"
+          + disk_size_gb              = 64
+          + name                      = "osdisk-opella-prod-centralus-001"
+          + storage_account_type      = "Premium_LRS"
+          + write_accelerator_enabled = false
+        }
+
+      + source_image_reference {
+          + offer     = "0001-com-ubuntu-server-jammy"
+          + publisher = "Canonical"
+          + sku       = "22_04-lts-gen2"
+          + version   = "latest"
+        }
+
+      + termination_notification (known after apply)
+    }
+
+  # azurerm_network_interface.this will be created
+  + resource "azurerm_network_interface" "this" {
+      + accelerated_networking_enabled = (known after apply)
+      + applied_dns_servers            = (known after apply)
+      + dns_servers                    = (known after apply)
+      + enable_accelerated_networking  = (known after apply)
+      + enable_ip_forwarding           = (known after apply)
+      + id                             = (known after apply)
+      + internal_domain_name_suffix    = (known after apply)
+      + ip_forwarding_enabled          = (known after apply)
+      + location                       = "centralus"
+      + mac_address                    = (known after apply)
+      + name                           = "nic-opella-prod-centralus-001"
+      + private_ip_address             = (known after apply)
+      + private_ip_addresses           = (known after apply)
+      + resource_group_name            = "rg-opella-prod-centralus-001"
+      + tags                           = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "owner"       = "platform-team"
+          + "project"     = "opella"
+          + "region"      = "centralus"
+        }
+      + virtual_machine_id             = (known after apply)
+
+      + ip_configuration {
+          + gateway_load_balancer_frontend_ip_configuration_id = (known after apply)
+          + name                                               = "ipconfig-primary"
+          + primary                                            = (known after apply)
+          + private_ip_address                                 = (known after apply)
+          + private_ip_address_allocation                      = "Dynamic"
+          + private_ip_address_version                         = "IPv4"
+          + public_ip_address_id                               = (known after apply)
+          + subnet_id                                          = (known after apply)
+        }
+    }
+
+  # azurerm_public_ip.this will be created
+  + resource "azurerm_public_ip" "this" {
+      + allocation_method       = "Static"
+      + ddos_protection_mode    = "VirtualNetworkInherited"
+      + fqdn                    = (known after apply)
+      + id                      = (known after apply)
+      + idle_timeout_in_minutes = 4
+      + ip_address              = (known after apply)
+      + ip_version              = "IPv4"
+      + location                = "centralus"
+      + name                    = "pip-opella-prod-centralus-001"
+      + resource_group_name     = "rg-opella-prod-centralus-001"
+      + sku                     = "Standard"
+      + sku_tier                = "Regional"
+      + tags                    = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "owner"       = "platform-team"
+          + "project"     = "opella"
+          + "region"      = "centralus"
+        }
+    }
+
+  # azurerm_resource_group.this will be created
+  + resource "azurerm_resource_group" "this" {
+      + id       = (known after apply)
+      + location = "centralus"
+      + name     = "rg-opella-prod-centralus-001"
+      + tags     = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "owner"       = "platform-team"
+          + "project"     = "opella"
+          + "region"      = "centralus"
+        }
+    }
+
+  # azurerm_storage_account.this will be created
+  + resource "azurerm_storage_account" "this" {
+      + access_tier                        = "Hot"
+      + account_kind                       = "StorageV2"
+      + account_replication_type           = "ZRS"
+      + account_tier                       = "Standard"
+      + allow_nested_items_to_be_public    = false
+      + cross_tenant_replication_enabled   = true
+      + default_to_oauth_authentication    = false
+      + dns_endpoint_type                  = "Standard"
+      + enable_https_traffic_only          = (known after apply)
+      + https_traffic_only_enabled         = true
+      + id                                 = (known after apply)
+      + infrastructure_encryption_enabled  = false
+      + is_hns_enabled                     = false
+      + large_file_share_enabled           = (known after apply)
+      + local_user_enabled                 = true
+      + location                           = "centralus"
+      + min_tls_version                    = "TLS1_2"
+      + name                               = (known after apply)
+      + nfsv3_enabled                      = false
+      + primary_access_key                 = (sensitive value)
+      + primary_blob_connection_string     = (sensitive value)
+      + primary_blob_endpoint              = (known after apply)
+      + primary_blob_host                  = (known after apply)
+      + primary_blob_internet_endpoint     = (known after apply)
+      + primary_blob_internet_host         = (known after apply)
+      + primary_blob_microsoft_endpoint    = (known after apply)
+      + primary_blob_microsoft_host        = (known after apply)
+      + primary_connection_string          = (sensitive value)
+      + primary_dfs_endpoint               = (known after apply)
+      + primary_dfs_host                   = (known after apply)
+      + primary_dfs_internet_endpoint      = (known after apply)
+      + primary_dfs_internet_host          = (known after apply)
+      + primary_dfs_microsoft_endpoint     = (known after apply)
+      + primary_dfs_microsoft_host         = (known after apply)
+      + primary_file_endpoint              = (known after apply)
+      + primary_file_host                  = (known after apply)
+      + primary_file_internet_endpoint     = (known after apply)
+      + primary_file_internet_host         = (known after apply)
+      + primary_file_microsoft_endpoint    = (known after apply)
+      + primary_file_microsoft_host        = (known after apply)
+      + primary_location                   = (known after apply)
+      + primary_queue_endpoint             = (known after apply)
+      + primary_queue_host                 = (known after apply)
+      + primary_queue_microsoft_endpoint   = (known after apply)
+      + primary_queue_microsoft_host       = (known after apply)
+      + primary_table_endpoint             = (known after apply)
+      + primary_table_host                 = (known after apply)
+      + primary_table_microsoft_endpoint   = (known after apply)
+      + primary_table_microsoft_host       = (known after apply)
+      + primary_web_endpoint               = (known after apply)
+      + primary_web_host                   = (known after apply)
+      + primary_web_internet_endpoint      = (known after apply)
+      + primary_web_internet_host          = (known after apply)
+      + primary_web_microsoft_endpoint     = (known after apply)
+      + primary_web_microsoft_host         = (known after apply)
+      + public_network_access_enabled      = true
+      + queue_encryption_key_type          = "Service"
+      + resource_group_name                = "rg-opella-prod-centralus-001"
+      + secondary_access_key               = (sensitive value)
+      + secondary_blob_connection_string   = (sensitive value)
+      + secondary_blob_endpoint            = (known after apply)
+      + secondary_blob_host                = (known after apply)
+      + secondary_blob_internet_endpoint   = (known after apply)
+      + secondary_blob_internet_host       = (known after apply)
+      + secondary_blob_microsoft_endpoint  = (known after apply)
+      + secondary_blob_microsoft_host      = (known after apply)
+      + secondary_connection_string        = (sensitive value)
+      + secondary_dfs_endpoint             = (known after apply)
+      + secondary_dfs_host                 = (known after apply)
+      + secondary_dfs_internet_endpoint    = (known after apply)
+      + secondary_dfs_internet_host        = (known after apply)
+      + secondary_dfs_microsoft_endpoint   = (known after apply)
+      + secondary_dfs_microsoft_host       = (known after apply)
+      + secondary_file_endpoint            = (known after apply)
+      + secondary_file_host                = (known after apply)
+      + secondary_file_internet_endpoint   = (known after apply)
+      + secondary_file_internet_host       = (known after apply)
+      + secondary_file_microsoft_endpoint  = (known after apply)
+      + secondary_file_microsoft_host      = (known after apply)
+      + secondary_location                 = (known after apply)
+      + secondary_queue_endpoint           = (known after apply)
+      + secondary_queue_host               = (known after apply)
+      + secondary_queue_microsoft_endpoint = (known after apply)
+      + secondary_queue_microsoft_host     = (known after apply)
+      + secondary_table_endpoint           = (known after apply)
+      + secondary_table_host               = (known after apply)
+      + secondary_table_microsoft_endpoint = (known after apply)
+      + secondary_table_microsoft_host     = (known after apply)
+      + secondary_web_endpoint             = (known after apply)
+      + secondary_web_host                 = (known after apply)
+      + secondary_web_internet_endpoint    = (known after apply)
+      + secondary_web_internet_host        = (known after apply)
+      + secondary_web_microsoft_endpoint   = (known after apply)
+      + secondary_web_microsoft_host       = (known after apply)
+      + sftp_enabled                       = false
+      + shared_access_key_enabled          = true
+      + table_encryption_key_type          = "Service"
+      + tags                               = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "owner"       = "platform-team"
+          + "project"     = "opella"
+          + "region"      = "centralus"
+        }
+
+      + blob_properties (known after apply)
+
+      + network_rules {
+          + bypass                     = [
+              + "AzureServices",
+            ]
+          + default_action             = "Allow"
+          + ip_rules                   = (known after apply)
+          + virtual_network_subnet_ids = (known after apply)
+        }
+
+      + queue_properties (known after apply)
+
+      + routing (known after apply)
+
+      + share_properties (known after apply)
+
+      + static_website (known after apply)
+    }
+
+  # azurerm_storage_container.data will be created
+  + resource "azurerm_storage_container" "data" {
+      + container_access_type             = "private"
+      + default_encryption_scope          = (known after apply)
+      + encryption_scope_override_enabled = true
+      + has_immutability_policy           = (known after apply)
+      + has_legal_hold                    = (known after apply)
+      + id                                = (known after apply)
+      + metadata                          = (known after apply)
+      + name                              = "data"
+      + resource_manager_id               = (known after apply)
+      + storage_account_name              = (known after apply)
+    }
+
+  # random_string.storage_suffix will be created
+  + resource "random_string" "storage_suffix" {
+      + id          = (known after apply)
+      + length      = 5
+      + lower       = true
+      + min_lower   = 0
+      + min_numeric = 0
+      + min_special = 0
+      + min_upper   = 0
+      + number      = true
+      + numeric     = true
+      + result      = (known after apply)
+      + special     = false
+      + upper       = false
+    }
+
+  # tls_private_key.vm_ssh will be created
+  + resource "tls_private_key" "vm_ssh" {
+      + algorithm                     = "RSA"
+      + ecdsa_curve                   = "P224"
+      + id                            = (known after apply)
+      + private_key_openssh           = (sensitive value)
+      + private_key_pem               = (sensitive value)
+      + private_key_pem_pkcs8         = (sensitive value)
+      + public_key_fingerprint_md5    = (known after apply)
+      + public_key_fingerprint_sha256 = (known after apply)
+      + public_key_openssh            = (known after apply)
+      + public_key_pem                = (known after apply)
+      + rsa_bits                      = 4096
+    }
+
+  # module.vnet.azurerm_network_ddos_protection_plan.this[0] will be created
+  + resource "azurerm_network_ddos_protection_plan" "this" {
+      + id                  = (known after apply)
+      + location            = "centralus"
+      + name                = "vnet-opella-prod-centralus-001-ddos"
+      + resource_group_name = "rg-opella-prod-centralus-001"
+      + tags                = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "owner"       = "platform-team"
+          + "project"     = "opella"
+          + "region"      = "centralus"
+        }
+      + virtual_network_ids = (known after apply)
+    }
+
+  # module.vnet.azurerm_network_security_group.this["snet-app-prod-centralus-001"] will be created
+  + resource "azurerm_network_security_group" "this" {
+      + id                  = (known after apply)
+      + location            = "centralus"
+      + name                = "nsg-snet-app-prod-centralus-001"
+      + resource_group_name = "rg-opella-prod-centralus-001"
+      + security_rule       = [
+          + {
+              + access                                     = "Allow"
+              + destination_address_prefix                 = "*"
+              + destination_address_prefixes               = []
+              + destination_application_security_group_ids = []
+              + destination_port_range                     = "22"
+              + destination_port_ranges                    = []
+              + direction                                  = "Inbound"
+              + name                                       = "AllowSSHFromMgmt"
+              + priority                                   = 100
+              + protocol                                   = "Tcp"
+              + source_address_prefix                      = "10.1.2.0/24"
+              + source_address_prefixes                    = []
+              + source_application_security_group_ids      = []
+              + source_port_range                          = "*"
+              + source_port_ranges                         = []
+                # (1 unchanged attribute hidden)
+            },
+          + {
+              + access                                     = "Allow"
+              + destination_address_prefix                 = "*"
+              + destination_address_prefixes               = []
+              + destination_application_security_group_ids = []
+              + destination_port_range                     = "443"
+              + destination_port_ranges                    = []
+              + direction                                  = "Inbound"
+              + name                                       = "AllowHTTPS"
+              + priority                                   = 200
+              + protocol                                   = "Tcp"
+              + source_address_prefix                      = "Internet"
+              + source_address_prefixes                    = []
+              + source_application_security_group_ids      = []
+              + source_port_range                          = "*"
+              + source_port_ranges                         = []
+                # (1 unchanged attribute hidden)
+            },
+          + {
+              + access                                     = "Deny"
+              + destination_address_prefix                 = "*"
+              + destination_address_prefixes               = []
+              + destination_application_security_group_ids = []
+              + destination_port_range                     = "*"
+              + destination_port_ranges                    = []
+              + direction                                  = "Inbound"
+              + name                                       = "DenyAllInbound"
+              + priority                                   = 4096
+              + protocol                                   = "*"
+              + source_address_prefix                      = "*"
+              + source_address_prefixes                    = []
+              + source_application_security_group_ids      = []
+              + source_port_range                          = "*"
+              + source_port_ranges                         = []
+                # (1 unchanged attribute hidden)
+            },
+        ]
+      + tags                = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "owner"       = "platform-team"
+          + "project"     = "opella"
+          + "region"      = "centralus"
+        }
+    }
+
+  # module.vnet.azurerm_network_security_group.this["snet-mgmt-prod-centralus-001"] will be created
+  + resource "azurerm_network_security_group" "this" {
+      + id                  = (known after apply)
+      + location            = "centralus"
+      + name                = "nsg-snet-mgmt-prod-centralus-001"
+      + resource_group_name = "rg-opella-prod-centralus-001"
+      + security_rule       = [
+          + {
+              + access                                     = "Allow"
+              + destination_address_prefix                 = "*"
+              + destination_address_prefixes               = []
+              + destination_application_security_group_ids = []
+              + destination_port_range                     = "22"
+              + destination_port_ranges                    = []
+              + direction                                  = "Inbound"
+              + name                                       = "AllowSSHInbound"
+              + priority                                   = 100
+              + protocol                                   = "Tcp"
+              + source_address_prefix                      = "10.10.0.0/24"
+              + source_address_prefixes                    = []
+              + source_application_security_group_ids      = []
+              + source_port_range                          = "*"
+              + source_port_ranges                         = []
+                # (1 unchanged attribute hidden)
+            },
+          + {
+              + access                                     = "Deny"
+              + destination_address_prefix                 = "*"
+              + destination_address_prefixes               = []
+              + destination_application_security_group_ids = []
+              + destination_port_range                     = "*"
+              + destination_port_ranges                    = []
+              + direction                                  = "Inbound"
+              + name                                       = "DenyAllInbound"
+              + priority                                   = 4096
+              + protocol                                   = "*"
+              + source_address_prefix                      = "*"
+              + source_address_prefixes                    = []
+              + source_application_security_group_ids      = []
+              + source_port_range                          = "*"
+              + source_port_ranges                         = []
+                # (1 unchanged attribute hidden)
+            },
+        ]
+      + tags                = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "owner"       = "platform-team"
+          + "project"     = "opella"
+          + "region"      = "centralus"
+        }
+    }
+
+  # module.vnet.azurerm_subnet.this["snet-app-prod-centralus-001"] will be created
+  + resource "azurerm_subnet" "this" {
+      + address_prefixes                               = [
+          + "10.1.1.0/24",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "snet-app-prod-centralus-001"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-opella-prod-centralus-001"
+      + service_endpoints                              = [
+          + "Microsoft.Storage",
+        ]
+      + virtual_network_name                           = "vnet-opella-prod-centralus-001"
+    }
+
+  # module.vnet.azurerm_subnet.this["snet-mgmt-prod-centralus-001"] will be created
+  + resource "azurerm_subnet" "this" {
+      + address_prefixes                               = [
+          + "10.1.2.0/24",
+        ]
+      + default_outbound_access_enabled                = true
+      + enforce_private_link_endpoint_network_policies = (known after apply)
+      + enforce_private_link_service_network_policies  = (known after apply)
+      + id                                             = (known after apply)
+      + name                                           = "snet-mgmt-prod-centralus-001"
+      + private_endpoint_network_policies              = (known after apply)
+      + private_endpoint_network_policies_enabled      = (known after apply)
+      + private_link_service_network_policies_enabled  = (known after apply)
+      + resource_group_name                            = "rg-opella-prod-centralus-001"
+      + virtual_network_name                           = "vnet-opella-prod-centralus-001"
+    }
+
+  # module.vnet.azurerm_subnet_network_security_group_association.this["snet-app-prod-centralus-001"] will be created
+  + resource "azurerm_subnet_network_security_group_association" "this" {
+      + id                        = (known after apply)
+      + network_security_group_id = (known after apply)
+      + subnet_id                 = (known after apply)
+    }
+
+  # module.vnet.azurerm_subnet_network_security_group_association.this["snet-mgmt-prod-centralus-001"] will be created
+  + resource "azurerm_subnet_network_security_group_association" "this" {
+      + id                        = (known after apply)
+      + network_security_group_id = (known after apply)
+      + subnet_id                 = (known after apply)
+    }
+
+  # module.vnet.azurerm_virtual_network.this will be created
+  + resource "azurerm_virtual_network" "this" {
+      + address_space       = [
+          + "10.1.0.0/16",
+        ]
+      + dns_servers         = (known after apply)
+      + guid                = (known after apply)
+      + id                  = (known after apply)
+      + location            = "centralus"
+      + name                = "vnet-opella-prod-centralus-001"
+      + resource_group_name = "rg-opella-prod-centralus-001"
+      + subnet              = (known after apply)
+      + tags                = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "owner"       = "platform-team"
+          + "project"     = "opella"
+          + "region"      = "centralus"
+        }
+
+      + ddos_protection_plan {
+          + enable = true
+          + id     = (known after apply)
+        }
+    }
+
+Plan: 16 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + resource_group_name    = "rg-opella-prod-centralus-001"
+  + storage_account_id     = (known after apply)
+  + storage_account_name   = (known after apply)
+  + storage_container_name = "data"
+  + subnet_ids             = {
+      + snet-app-prod-centralus-001  = (known after apply)
+      + snet-mgmt-prod-centralus-001 = (known after apply)
+    }
+  + vm_name                = "vm-opella-prod-centralus-001"
+  + vm_private_ip          = (known after apply)
+  + vnet_id                = (known after apply)
+  + vnet_name              = "vnet-opella-prod-centralus-001"
+
+Do you want to perform these actions?
+  Terraform will perform the actions described above.
+  Only 'yes' will be accepted to approve.
+
+  Enter a value: yes
+
+tls_private_key.vm_ssh: Creating...
+random_string.storage_suffix: Creating...
+random_string.storage_suffix: Creation complete after 0s [id=w459z]
+tls_private_key.vm_ssh: Creation complete after 1s [id=ad775a64f52e2ac3a86c002bf3facb2f464b5771]
+azurerm_resource_group.this: Creating...
+azurerm_resource_group.this: Still creating... [10s elapsed]
+azurerm_resource_group.this: Creation complete after 13s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001]
+module.vnet.azurerm_network_ddos_protection_plan.this[0]: Creating...
+azurerm_public_ip.this: Creating...
+module.vnet.azurerm_network_security_group.this["snet-mgmt-prod-centralus-001"]: Creating...
+module.vnet.azurerm_network_security_group.this["snet-app-prod-centralus-001"]: Creating...
+azurerm_storage_account.this: Creating...
+module.vnet.azurerm_network_security_group.this["snet-app-prod-centralus-001"]: Creation complete after 4s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/networkSecurityGroups/nsg-snet-app-prod-centralus-001]
+azurerm_public_ip.this: Creation complete after 5s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/publicIPAddresses/pip-opella-prod-centralus-001]
+module.vnet.azurerm_network_security_group.this["snet-mgmt-prod-centralus-001"]: Creation complete after 5s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/networkSecurityGroups/nsg-snet-mgmt-prod-centralus-001]
+module.vnet.azurerm_network_ddos_protection_plan.this[0]: Still creating... [10s elapsed]
+azurerm_storage_account.this: Still creating... [10s elapsed]
+module.vnet.azurerm_network_ddos_protection_plan.this[0]: Creation complete after 13s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/ddosProtectionPlans/vnet-opella-prod-centralus-001-ddos]
+module.vnet.azurerm_virtual_network.this: Creating...
+module.vnet.azurerm_virtual_network.this: Creation complete after 6s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/virtualNetworks/vnet-opella-prod-centralus-001]
+module.vnet.azurerm_subnet.this["snet-mgmt-prod-centralus-001"]: Creating...
+module.vnet.azurerm_subnet.this["snet-app-prod-centralus-001"]: Creating...
+azurerm_storage_account.this: Still creating... [20s elapsed]
+module.vnet.azurerm_subnet.this["snet-app-prod-centralus-001"]: Creation complete after 7s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/virtualNetworks/vnet-opella-prod-centralus-001/subnets/snet-app-prod-centralus-001]
+module.vnet.azurerm_subnet.this["snet-mgmt-prod-centralus-001"]: Still creating... [10s elapsed]
+azurerm_storage_account.this: Still creating... [30s elapsed]
+module.vnet.azurerm_subnet.this["snet-mgmt-prod-centralus-001"]: Creation complete after 13s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/virtualNetworks/vnet-opella-prod-centralus-001/subnets/snet-mgmt-prod-centralus-001]
+module.vnet.azurerm_subnet_network_security_group_association.this["snet-app-prod-centralus-001"]: Creating...
+module.vnet.azurerm_subnet_network_security_group_association.this["snet-mgmt-prod-centralus-001"]: Creating...
+azurerm_network_interface.this: Creating...
+module.vnet.azurerm_subnet_network_security_group_association.this["snet-mgmt-prod-centralus-001"]: Creation complete after 6s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/virtualNetworks/vnet-opella-prod-centralus-001/subnets/snet-mgmt-prod-centralus-001]
+azurerm_storage_account.this: Still creating... [40s elapsed]
+module.vnet.azurerm_subnet_network_security_group_association.this["snet-app-prod-centralus-001"]: Still creating... [10s elapsed]
+azurerm_network_interface.this: Still creating... [10s elapsed]
+module.vnet.azurerm_subnet_network_security_group_association.this["snet-app-prod-centralus-001"]: Creation complete after 13s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/virtualNetworks/vnet-opella-prod-centralus-001/subnets/snet-app-prod-centralus-001]
+azurerm_network_interface.this: Creation complete after 16s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/networkInterfaces/nic-opella-prod-centralus-001]
+azurerm_linux_virtual_machine.this: Creating...
+azurerm_storage_account.this: Still creating... [50s elapsed]
+azurerm_linux_virtual_machine.this: Still creating... [10s elapsed]
+azurerm_storage_account.this: Still creating... [1m0s elapsed]
+azurerm_linux_virtual_machine.this: Still creating... [20s elapsed]
+azurerm_storage_account.this: Still creating... [1m10s elapsed]
+azurerm_storage_account.this: Creation complete after 1m13s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Storage/storageAccounts/stopellaprodcentralusw45]
+azurerm_storage_container.data: Creating...
+azurerm_storage_container.data: Creation complete after 1s [id=https://stopellaprodcentralusw45.blob.core.windows.net/data]
+azurerm_linux_virtual_machine.this: Still creating... [30s elapsed]
+azurerm_linux_virtual_machine.this: Still creating... [40s elapsed]
+azurerm_linux_virtual_machine.this: Still creating... [50s elapsed]
+azurerm_linux_virtual_machine.this: Creation complete after 51s [id=/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Compute/virtualMachines/vm-opella-prod-centralus-001]
+Releasing state lock. This may take a few moments...
+
+Apply complete! Resources: 16 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+resource_group_name = "rg-opella-prod-centralus-001"
+storage_account_id = "/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Storage/storageAccounts/stopellaprodcentralusw45"
+storage_account_name = "stopellaprodcentralusw45"
+storage_container_name = "data"
+subnet_ids = {
+  "snet-app-prod-centralus-001" = "/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/virtualNetworks/vnet-opella-prod-centralus-001/subnets/snet-app-prod-centralus-001"
+  "snet-mgmt-prod-centralus-001" = "/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/virtualNetworks/vnet-opella-prod-centralus-001/subnets/snet-mgmt-prod-centralus-001"
+}
+vm_name = "vm-opella-prod-centralus-001"
+vm_private_ip = "10.1.1.4"
+vnet_id = "/subscriptions/6584539c-b10d-4396-9488-99924d134d5a/resourceGroups/rg-opella-prod-centralus-001/providers/Microsoft.Network/virtualNetworks/vnet-opella-prod-centralus-001"
+vnet_name = "vnet-opella-prod-centralus-001"
