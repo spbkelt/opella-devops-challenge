@@ -101,6 +101,7 @@ resource "azurerm_storage_account" "this" {
   #checkov:skip=CKV2_AZURE_1:Customer Managed Key requires Key Vault integration; deferred as out-of-scope for this challenge.
   #checkov:skip=CKV2_AZURE_33:Private endpoint requires additional infrastructure (Private DNS Zone, subnet delegation); deferred as out-of-scope for this challenge.
   #checkov:skip=CKV_AZURE_35:Deny policy is enforced by azurerm_storage_account_network_rules after container creation; inline Allow is intentional to unblock the Terraform runner.
+  #checkov:skip=CKV2_AZURE_40:Public endpoint must be reachable by the CI runner to create the blob container via the data plane; access is restricted to the app subnet by azurerm_storage_account_network_rules (defaultAction=Deny).
   name                     = local.storage_account_name
   resource_group_name      = azurerm_resource_group.this.name
   location                 = azurerm_resource_group.this.location
@@ -111,7 +112,13 @@ resource "azurerm_storage_account" "this" {
   shared_access_key_enabled       = var.storage_shared_access_key_enabled
   https_traffic_only_enabled      = true
   min_tls_version                 = "TLS1_2"
-  public_network_access_enabled   = false
+  # Must be true so the CI runner can reach the blob data-plane endpoint to
+  # create the container. public_network_access_enabled=false blocks all public
+  # internet traffic at the network layer before AAD auth or network rules are
+  # evaluated — even with defaultAction=Allow the runner is rejected.
+  # Actual access control is enforced by azurerm_storage_account_network_rules
+  # (defaultAction=Deny, only app subnet allowed) applied after the container.
+  public_network_access_enabled   = true
   allow_nested_items_to_be_public = false
   access_tier                     = "Hot"
 

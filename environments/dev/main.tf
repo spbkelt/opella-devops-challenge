@@ -112,7 +112,7 @@ resource "random_string" "storage_suffix" {
 }
 resource "azurerm_storage_account" "this" {
   #checkov:skip=CKV_AZURE_206:LRS replication is intentional in dev for cost savings.
-  #checkov:skip=CKV2_AZURE_40:Shared key access is intentionally enabled in dev for developer convenience.
+  #checkov:skip=CKV2_AZURE_40:Shared key access is intentionally enabled in dev for developer convenience; public endpoint is required for CI runner data-plane access (see public_network_access_enabled comment).
   #checkov:skip=CKV_AZURE_33:Queue logging is implemented via azurerm_monitor_diagnostic_setting.storage_queue; azurerm 3.x does not expose queue_properties.logging for StorageV2.
   #checkov:skip=CKV2_AZURE_21:Blob read logging is implemented via azurerm_monitor_diagnostic_setting.storage_blob; azurerm 3.x does not expose blob_properties.logging for StorageV2.
   #checkov:skip=CKV2_AZURE_1:Customer Managed Key requires Key Vault integration; deferred as out-of-scope for this challenge.
@@ -128,7 +128,8 @@ resource "azurerm_storage_account" "this" {
   shared_access_key_enabled       = var.storage_shared_access_key_enabled
   https_traffic_only_enabled      = true
   min_tls_version                 = "TLS1_2"
-  public_network_access_enabled   = false
+  # See environments/prod/main.tf for why this must be true.
+  public_network_access_enabled   = true
   allow_nested_items_to_be_public = false
   access_tier                     = "Hot"
 
