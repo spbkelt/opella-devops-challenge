@@ -124,14 +124,25 @@ resource "azurerm_storage_account" "this" {
     }
   }
 
-  network_rules {
-    default_action             = "Deny"
-    bypass                     = ["AzureServices"]
-    virtual_network_subnet_ids = [module.vnet.subnet_ids[local.app_subnet_key]]
-    ip_rules                   = var.storage_allowed_ip_rules
-  }
-
   tags = local.common_tags
+}
+
+# Network rules are applied after the container is created.
+#
+# Inlining network_rules in azurerm_storage_account locks the data plane before
+# Terraform can create the container, causing a 403 AuthorizationFailure from the
+# GitHub Actions runner (not in the allowed subnet). Separating into
+# azurerm_storage_account_network_rules with depends_on ensures the account is
+# open during resource creation and locked immediately after.
+resource "azurerm_storage_account_network_rules" "this" {
+  #checkov:skip=CKV_AZURE_59:Network rules are enforced; this resource applies Deny-by-default after container creation.
+  storage_account_id         = azurerm_storage_account.this.id
+  default_action             = "Deny"
+  bypass                     = ["AzureServices"]
+  virtual_network_subnet_ids = [module.vnet.subnet_ids[local.app_subnet_key]]
+  ip_rules                   = var.storage_allowed_ip_rules
+
+  depends_on = [azurerm_storage_container.data]
 }
 
 resource "azurerm_storage_container" "data" {

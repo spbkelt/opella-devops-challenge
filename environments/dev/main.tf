@@ -146,14 +146,20 @@ resource "azurerm_storage_account" "this" {
     expiration_action = "Log"
   }
 
-  network_rules {
-    default_action             = "Deny"
-    bypass                     = ["AzureServices"]
-    virtual_network_subnet_ids = [module.vnet.subnet_ids[local.app_subnet_key]]
-    ip_rules                   = var.storage_allowed_ip_rules
-  }
-
   tags = local.common_tags
+}
+
+# Network rules are applied after the container is created.
+# See environments/prod/main.tf for the full explanation.
+resource "azurerm_storage_account_network_rules" "this" {
+  #checkov:skip=CKV_AZURE_59:Network rules are enforced; this resource applies Deny-by-default after container creation.
+  storage_account_id         = azurerm_storage_account.this.id
+  default_action             = "Deny"
+  bypass                     = ["AzureServices"]
+  virtual_network_subnet_ids = [module.vnet.subnet_ids[local.app_subnet_key]]
+  ip_rules                   = var.storage_allowed_ip_rules
+
+  depends_on = [azurerm_storage_container.data]
 }
 
 resource "azurerm_storage_container" "data" {
