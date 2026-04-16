@@ -45,5 +45,5 @@ output "storage_account_id" {
 
 output "storage_container_name" {
   description = "Name of the default blob container."
-  value       = azurerm_storage_container.data.name
+  value       = local.storage_container
 }
