@@ -233,3 +233,4 @@ resource "azurerm_monitor_diagnostic_setting" "storage_queue" {
 }
 
 
+
