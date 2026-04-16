@@ -40,6 +40,7 @@ locals {
     project     = var.project
     managed_by  = "terraform"
     owner       = var.owner
+    cost_center = "dev-workloads"
   }
 
   subnets = {
