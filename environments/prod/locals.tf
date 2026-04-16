@@ -23,7 +23,7 @@ locals {
   vm_name          = "vm-${var.project}-${var.environment}-${var.location}-001"
   vm_computer_name = "vm-${local.region_short[var.location]}-${var.environment}-001"
   nic_name         = "nic-${var.project}-${var.environment}-${var.location}-001"
-os_disk_name     = "osdisk-${var.project}-${var.environment}-${var.location}-001"
+  os_disk_name     = "osdisk-${var.project}-${var.environment}-${var.location}-001"
 
   storage_account_name = substr(
     "${replace(lower("st${var.project}${var.environment}${var.location}"), "-", "")}${random_string.storage_suffix.result}",
