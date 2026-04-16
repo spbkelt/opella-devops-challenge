@@ -189,6 +189,19 @@ if [[ -z "$DEV_RG" || -z "$PROD_RG" ]]; then
   fi
 fi
 
+# Storage Blob Data Contributor at subscription scope.
+#
+# Required when Terraform creates storage accounts with shared_access_key_enabled=false
+# (prod pattern). The azurerm provider polls the storage data plane after creation;
+# without AAD data-plane access that poll fails with 403 KeyBasedAuthenticationNotPermitted.
+# Because the storage account is created by Terraform (it does not exist before the run),
+# the role cannot be pre-scoped to the account — subscription scope is the minimum viable
+# target. The management-plane Contributor role does NOT cover data-plane operations.
+create_role_assignment \
+  "$SP_OBJECT_ID" \
+  "Storage Blob Data Contributor" \
+  "/subscriptions/${SUBSCRIPTION_ID}"
+
 # Resolve per-environment values, falling back to the legacy single-account vars.
 _dev_tfstate_rg="${DEV_TFSTATE_RG:-${TFSTATE_RG:-}}"
 _dev_tfstate_sa="${DEV_TFSTATE_SA:-${TFSTATE_SA:-}}"
@@ -249,14 +262,18 @@ Use these in workflow jobs:
   TF_IN_AUTOMATION: true
   TF_INPUT: 0
 
+Role assignments applied:
+  - Contributor                on /subscriptions/${SUBSCRIPTION_ID}  (management plane)
+  - Storage Blob Data Contributor on /subscriptions/${SUBSCRIPTION_ID}  (data plane, all storage accounts)
+  - Storage Blob Data Contributor on dev  tfstate storage account (if DEV_TFSTATE_RG/SA were provided)
+  - Storage Blob Data Contributor on prod tfstate storage account (if PROD_TFSTATE_RG/SA were provided)
+
 Notes:
   - GitHub Environments are used for deployment protection rules and production approval.
   - Plan jobs in the current workflow use REPOSITORY secrets, not environment secrets.
   - OIDC does not require an Azure client secret for GitHub Actions.
-  - Re-run with DEV_TFSTATE_RG / DEV_TFSTATE_SA / PROD_TFSTATE_RG / PROD_TFSTATE_SA
-    to assign Storage Blob Data Contributor on each backend storage account.
-    Example:
-      DEV_TFSTATE_RG=tfstate-dev-rg   DEV_TFSTATE_SA=tfstatedev6584539cb1 \\
-      PROD_TFSTATE_RG=tfstate-prod-rg PROD_TFSTATE_SA=tfstateprod6584539cb1 \\
-      OWNER=<owner> REPO=<repo> ./scripts/setup-github-oidc.sh
+  - Storage Blob Data Contributor at subscription scope is required for environments where
+    shared_access_key_enabled=false (prod). The azurerm provider uses data-plane polling
+    after storage account creation; without this role the apply fails with 403.
+  - environments/prod/providers.tf must include storage_use_azuread=true for the same reason.
 EOF

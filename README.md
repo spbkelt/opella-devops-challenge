@@ -16,13 +16,12 @@ This repository includes:
 
 ## Deliverables
 
-This repository contains:
-
 - `modules/vnet/` — reusable VNet module with subnets, NSGs, optional DDoS plan, and outputs
 - `environments/dev/` — root Terraform for development
 - `environments/prod/` — root Terraform for production
 - `.github/workflows/terraform.yml` — CI/CD workflow for lint, validate, plan, and apply
-- `scripts/bootstrap.sh` or equivalent bootstrap script — creates or reuses remote state resources, GitHub OIDC identity, role assignments, and backend config files
+- `scripts/bootstrap-dev.sh` / `scripts/bootstrap-prod.sh` — create or reuse per-environment remote state resources and backend config files
+- `scripts/setup-github-oidc.sh` — create or reuse the GitHub OIDC identity, federated credentials, and all required role assignments
 
 ## Design choices
 
@@ -107,43 +106,80 @@ These outputs are useful for validation, integration, and troubleshooting.
 
 ## Remote state
 
-Terraform remote state is stored in Azure Blob Storage.
+Terraform remote state is stored in Azure Blob Storage with one storage account per environment.
 
-Recommended pattern:
+| Environment | Resource group | Storage account |
+|-------------|----------------|-----------------|
+| dev | `tfstate-dev-rg` | derived from subscription ID |
+| prod | `tfstate-prod-rg` | derived from subscription ID |
 
-- one stable backend storage account
-- one state container
-- separate state keys per environment
-
-Example keys:
-
-- `environments/dev/terraform.tfstate`
-- `environments/prod/terraform.tfstate`
+Both backends use `use_azuread_auth = true` — the AzureRM backend authenticates to the storage data plane via Azure AD tokens, not storage account keys. The GitHub Actions identity therefore needs `Storage Blob Data Contributor` on each backend storage account (assigned by `setup-github-oidc.sh`).
 
 Do not rotate the backend storage account name after bootstrap.
 
 ## Bootstrap model
 
-This repository uses a bootstrap script instead of a separate Terraform bootstrap stack.
+This repository uses two layers of bootstrap scripts.
 
-The bootstrap script should create or reuse only the pre-Terraform dependencies:
+### Layer 1 — per-environment state storage
 
-- backend resource group
-- backend storage account
-- backend container
-- Microsoft Entra app / service principal for GitHub Actions
-- federated credentials for GitHub OIDC
-- role assignments needed for Terraform backend access and infrastructure apply
-- generated `backend.tfbackend` files for `environments/dev` and `environments/prod`
+Run once per environment to create or reuse the remote state prerequisites:
 
-That avoids the backend chicken-and-egg problem because Azure Storage must already exist before Terraform can use it as a backend.
+```bash
+# dev
+SUBSCRIPTION_ID=<sub-id> ./scripts/bootstrap-dev.sh
+
+# prod
+SUBSCRIPTION_ID=<sub-id> ./scripts/bootstrap-prod.sh
+```
+
+Each script:
+
+- creates or reuses the backend resource group, storage account, and container
+- writes `environments/<env>/backend.tfbackend`
+- optionally runs `terraform init`
+
+### Layer 2 — GitHub OIDC identity
+
+Run once to create or update the Microsoft Entra app, service principal, federated credentials, and all required role assignments:
+
+```bash
+DEV_TFSTATE_RG=tfstate-dev-rg   DEV_TFSTATE_SA=<dev-sa-name>  \
+PROD_TFSTATE_RG=tfstate-prod-rg PROD_TFSTATE_SA=<prod-sa-name> \
+OWNER=<github-owner> REPO=<github-repo>                        \
+./scripts/setup-github-oidc.sh
+```
+
+The script assigns:
+
+| Role | Scope | Purpose |
+|------|-------|---------|
+| `Contributor` | subscription | create and manage all workload resources |
+| `Storage Blob Data Contributor` | subscription | data-plane access to dynamically-created storage accounts |
+| `Storage Blob Data Contributor` | dev tfstate storage account | Terraform backend access for dev |
+| `Storage Blob Data Contributor` | prod tfstate storage account | Terraform backend access for prod |
+
+The subscription-scope `Storage Blob Data Contributor` is required because the prod environment creates a storage account with `shared_access_key_enabled = false`. The `azurerm` provider polls the storage data plane after creation to verify availability. Without AAD data-plane access that poll fails with `403 KeyBasedAuthenticationNotPermitted`. The management-plane `Contributor` role does not cover data-plane operations. Because the account is created by Terraform it cannot be pre-scoped, so subscription scope is the minimum viable target.
+
+## Provider configuration — `storage_use_azuread`
+
+`environments/prod/providers.tf` includes:
+
+```hcl
+provider "azurerm" {
+  storage_use_azuread = true
+  ...
+}
+```
+
+This is required for any environment where a storage account has `shared_access_key_enabled = false`. Without it the `azurerm` provider falls back to key-based data-plane calls and fails with `KeyBasedAuthenticationNotPermitted`. The dev environment does not set this because dev storage uses `shared_access_key_enabled = true`.
 
 ## Branching and release model
 
 This repository uses a simple promotion flow:
 
 - `develop` -> deploys to `dev`
-- `main` -> deploys to `production`
+- `main` -> deploys to `prod`
 
 Recommended flow:
 
@@ -159,6 +195,20 @@ Recommended flow:
 
 The release lifecycle is defined in `.github/workflows/terraform.yml`.
 
+### Triggers
+
+| Event | Branch | Effect |
+|-------|--------|--------|
+| `pull_request` | `develop` | lint + plan dev |
+| `pull_request` | `main` | lint + plan prod |
+| `push` | `develop` | lint + apply dev |
+| `push` | `main` | lint + apply prod (requires manual approval) |
+| `workflow_dispatch` | any | lint + plan for selected environment |
+
+The `workflow_dispatch` trigger lets you run a plan at any time from the GitHub Actions UI without needing to push a commit. Select the target environment (`dev` or `prod`) from the dropdown. Dispatch runs execute plan only — no apply.
+
+Path filters restrict automatic triggers to changes under `environments/**`, `modules/**`, or `.github/workflows/terraform.yml`. Changes to scripts or documentation do not trigger the pipeline.
+
 ### Pull request lifecycle
 
 On every PR to `develop` or `main`:
@@ -169,7 +219,7 @@ On every PR to `develop` or `main`:
 4. `tflint`
 5. `checkov`
 6. `terraform plan`
-7. plan output is posted back to the PR as a comment
+7. plan output is posted back to the PR as a comment (upserted on re-runs)
 
 PR target determines which environment is planned:
 
@@ -187,36 +237,32 @@ On push to `main`:
 - deploy `prod`
 - deployment is gated by the GitHub `production` environment approval rule
 
+### Job structure
+
+The `detect` job runs first and sets three outputs — `target`, `run_plan`, `run_apply` — that all downstream jobs consume. This centralises environment detection and avoids duplicating branch-matching logic across jobs.
+
+The `plan` job has a static name (`Plan`) rather than a dynamic one referencing `needs` outputs. GitHub Actions only evaluates job name expressions when a job executes; skipped jobs display the raw template string.
+
 ## Authentication model for GitHub Actions
 
-This repository uses GitHub OIDC with Azure.
+This repository uses GitHub OIDC with Azure — no stored client secrets.
 
-That means:
+GitHub exchanges a short-lived OIDC token directly with Azure. Azure trusts the workflow based on federated credentials attached to the Microsoft Entra app.
 
-- no Azure client secret is needed in GitHub Actions
-- GitHub exchanges a short-lived OIDC token directly with Azure
-- Azure trusts the workflow based on federated credentials attached to the same Microsoft Entra app or service principal
+The workflow sets these environment variables on Terraform jobs:
 
-The workflow exports these environment variables to Terraform jobs:
+```yaml
+ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+ARM_USE_OIDC: 'true'
+```
 
-- `ARM_CLIENT_ID`
-- `ARM_TENANT_ID`
-- `ARM_SUBSCRIPTION_ID`
-- `ARM_USE_OIDC=true`
-- `ARM_USE_AZUREAD=true`
-- `TF_IN_AUTOMATION=true`
-- `TF_INPUT=0`
-
-### Why the workflow keeps `ARM_USE_OIDC` and `ARM_USE_AZUREAD`
-
-Keep both in the workflow unless you hardcode the same backend settings in `backend.tfbackend`.
-
-- `ARM_USE_OIDC=true` enables OIDC / workload identity federation for the AzureRM backend and provider.
-- `ARM_USE_AZUREAD=true` enables Microsoft Entra ID authentication to the Azure Storage data plane used by the AzureRM backend.
+`ARM_USE_OIDC=true` enables OIDC / workload identity federation for both the AzureRM provider and the AzureRM backend. The backend additionally requires `use_azuread_auth = true` in `backend.tfbackend` to use AAD tokens for blob data-plane access.
 
 ## GitHub secret layout
 
-Use repository secrets for this workflow:
+Use repository secrets:
 
 - `AZURE_CLIENT_ID`
 - `AZURE_TENANT_ID`
@@ -250,26 +296,24 @@ Recommended configuration:
 
 ## Required Azure OIDC subjects
 
-Because the current workflow has:
+The Microsoft Entra app must trust these three subject claims:
 
-- PR plan jobs without a GitHub Environment
-- apply jobs with `environment: dev`
-- apply jobs with `environment: production`
+- `repo:<owner>/<repo>:pull_request`
+- `repo:<owner>/<repo>:environment:dev`
+- `repo:<owner>/<repo>:environment:production`
 
-the Microsoft Entra app must trust these three subject claims:
-
-- `repo:spbkelt/opella-devops-challenge:pull_request`
-- `repo:spbkelt/opella-devops-challenge:environment:dev`
-- `repo:spbkelt/opella-devops-challenge:environment:production`
+`setup-github-oidc.sh` creates and keeps these up to date automatically.
 
 ## Required Azure role assignments
 
-The GitHub Actions identity needs at least:
+| Role | Scope | Why |
+|------|-------|-----|
+| `Contributor` | subscription | create and manage all workload resources across both environments |
+| `Storage Blob Data Contributor` | subscription | data-plane access for storage accounts created by Terraform with `shared_access_key_enabled=false` |
+| `Storage Blob Data Contributor` | dev tfstate storage account | Terraform backend init / state read-write for dev |
+| `Storage Blob Data Contributor` | prod tfstate storage account | Terraform backend init / state read-write for prod |
 
-- `Storage Blob Data Contributor` on the Terraform backend storage account
-- permission to create and manage workload resources
-
-If your Terraform stacks create the environment resource groups themselves, the simplest bootstrap is subscription-scope `Contributor`. If you later precreate the environment resource groups, you can tighten that to RG-scoped `Contributor`.
+All four assignments are applied by `setup-github-oidc.sh`.
 
 ## Fork PR note
 
@@ -287,30 +331,37 @@ Without `set -o pipefail`, the shell can report success because `tee` succeeded 
 
 ## Initial setup checklist
 
-1. Run the bootstrap script to create or reuse:
-   - tfstate resource group
-   - tfstate storage account
-   - tfstate container
-   - GitHub OIDC identity
-   - federated credentials
-   - role assignments
-   - generated backend config files
+1. Bootstrap per-environment state storage:
+   ```bash
+   SUBSCRIPTION_ID=<sub-id> ./scripts/bootstrap-dev.sh
+   SUBSCRIPTION_ID=<sub-id> ./scripts/bootstrap-prod.sh
+   ```
 
-2. Add repository secrets:
+2. Set up GitHub OIDC identity and all role assignments:
+   ```bash
+   DEV_TFSTATE_RG=tfstate-dev-rg   DEV_TFSTATE_SA=<dev-sa>  \
+   PROD_TFSTATE_RG=tfstate-prod-rg PROD_TFSTATE_SA=<prod-sa> \
+   OWNER=<owner> REPO=<repo>                                 \
+   ./scripts/setup-github-oidc.sh
+   ```
+
+3. Add repository secrets:
    - `AZURE_CLIENT_ID`
    - `AZURE_TENANT_ID`
    - `AZURE_SUBSCRIPTION_ID`
 
-3. Create GitHub Environments:
+4. Create GitHub Environments:
    - `dev`
    - `production`
 
-4. Configure protection rules:
-   - `dev` -> no reviewers, branch `develop`
-   - `production` -> reviewers required, branch `main`
+5. Configure protection rules:
+   - `dev` — no reviewers, branch `develop`
+   - `production` — reviewers required, branch `main`
 
-5. Initialize Terraform locally when needed:
-   - `terraform init -backend-config=backend.tfbackend`
+6. Initialize Terraform locally when needed:
+   ```bash
+   terraform init -backend-config=backend.tfbackend
+   ```
 
 ## Local workflow examples
 
