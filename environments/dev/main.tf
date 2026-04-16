@@ -118,6 +118,7 @@ resource "azurerm_storage_account" "this" {
   #checkov:skip=CKV2_AZURE_1:Customer Managed Key requires Key Vault integration; deferred as out-of-scope for this challenge.
   #checkov:skip=CKV2_AZURE_33:Private endpoint requires additional infrastructure; deferred as out-of-scope for this challenge.
   #checkov:skip=CKV_AZURE_35:Deny policy is enforced by azurerm_storage_account_network_rules after container creation; inline Allow is intentional to unblock the Terraform runner.
+  #checkov:skip=CKV_AZURE_59:Public endpoint is enabled so the CI runner can reach the blob data plane; actual access is restricted to the app subnet via azurerm_storage_account_network_rules (defaultAction=Deny).
   name                     = local.storage_account_name
   resource_group_name      = azurerm_resource_group.this.name
   location                 = azurerm_resource_group.this.location
