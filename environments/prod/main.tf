@@ -167,14 +167,32 @@ resource "azurerm_storage_account_network_rules" "this" {
   virtual_network_subnet_ids = [module.vnet.subnet_ids[local.app_subnet_key]]
   ip_rules                   = var.storage_allowed_ip_rules
 
-  depends_on = [azurerm_storage_container.data]
+  depends_on = [null_resource.storage_container]
 }
 
-resource "azurerm_storage_container" "data" {
-  #checkov:skip=CKV2_AZURE_21:Blob logging is configured on the parent storage account via blob_properties.logging.
-  name                  = local.storage_container
-  storage_account_name  = azurerm_storage_account.this.name
-  container_access_type = "private"
+# Container created via the ARM management-plane REST API (management.azure.com)
+# rather than the blob data-plane (blob.core.windows.net).
+#
+# azurerm_storage_container (v3.x) refreshes state through the blob data-plane,
+# which is blocked by the Deny-default network rules applied afterwards. Using a
+# null_resource with local-exec means Terraform only calls Azure during the
+# initial creation; subsequent plan/apply cycles never touch the blob endpoint.
+resource "null_resource" "storage_container" {
+  triggers = {
+    storage_account_id = azurerm_storage_account.this.id
+    container_name     = local.storage_container
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      az rest \
+        --method put \
+        --url "${azurerm_storage_account.this.id}/blobServices/default/containers/${local.storage_container}?api-version=2023-01-01" \
+        --body '{"properties":{"publicAccess":"None"}}'
+    EOT
+  }
+
+  depends_on = [azurerm_storage_account.this]
 }
 
 resource "azurerm_log_analytics_workspace" "this" {
