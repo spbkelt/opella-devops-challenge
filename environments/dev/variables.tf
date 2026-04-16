@@ -123,3 +123,8 @@ variable "vm_image_version" {
   type        = string
   default     = "latest"
 }
+variable "storage_allowed_ip_rules" {
+  description = "Explicit public IPs allowed to access the storage account"
+  type        = list(string)
+  default     = []
+}

@@ -37,7 +37,7 @@ variable "enable_ddos_protection" {
 variable "enable_network_watcher" {
   description = "Deploy Network Watcher in this region. Set false if one already exists."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "vm_size" {
@@ -122,4 +122,9 @@ variable "vm_image_version" {
   description = "Version of the VM OS image. Use 'latest' to always deploy the newest patch."
   type        = string
   default     = "latest"
+}
+variable "storage_allowed_ip_rules" {
+  description = "Explicit public IPs allowed to access the storage account"
+  type        = list(string)
+  default     = []
 }

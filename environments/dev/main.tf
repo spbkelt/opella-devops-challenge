@@ -97,6 +97,17 @@ resource "azurerm_linux_virtual_machine" "this" {
 # Network rules restrict access to the app subnet via a service endpoint,
 # ensuring traffic stays on the Azure backbone rather than the public internet.
 # -----------------------------------------------------------------------------
+resource "tls_private_key" "vm_ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "random_string" "storage_suffix" {
+  length  = 5
+  upper   = false
+  special = false
+  numeric = true
+}
 resource "azurerm_storage_account" "this" {
   name                     = local.storage_account_name
   resource_group_name      = azurerm_resource_group.this.name
@@ -111,10 +122,14 @@ resource "azurerm_storage_account" "this" {
   public_network_access_enabled   = true
   allow_nested_items_to_be_public = false
   access_tier                     = "Hot"
+
   network_rules {
-    default_action = "Allow"
-    bypass         = ["AzureServices"]
+    default_action             = "Deny"
+    bypass                     = ["AzureServices"]
+    virtual_network_subnet_ids = [module.vnet.subnet_ids[local.app_subnet_key]]
+    ip_rules                   = var.storage_allowed_ip_rules
   }
+
   tags = local.common_tags
 }
 
@@ -124,14 +139,35 @@ resource "azurerm_storage_container" "data" {
   container_access_type = "private"
 }
 
-resource "tls_private_key" "vm_ssh" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
+resource "azurerm_log_analytics_workspace" "this" {
+  name                = "law-opella-prod-eastus-001"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+  tags                = local.common_tags
 }
 
-resource "random_string" "storage_suffix" {
-  length  = 5
-  upper   = false
-  special = false
-  numeric = true
+resource "azurerm_monitor_diagnostic_setting" "storage_blob" {
+  name                       = "diag-${azurerm_storage_account.this.name}-blob"
+  target_resource_id         = "${azurerm_storage_account.this.id}/blobServices/default"
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
+
+  enabled_log {
+    category = "StorageRead"
+  }
+
+  enabled_log {
+    category = "StorageWrite"
+  }
+
+  enabled_log {
+    category = "StorageDelete"
+  }
+
+  metric {
+    category = "Transaction"
+    enabled  = true
+  }
 }
+

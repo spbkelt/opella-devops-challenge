@@ -1,6 +1,8 @@
 locals {
-  rg_name   = "rg-${var.project}-${var.environment}-${var.location}-001"
-  vnet_name = "vnet-${var.project}-${var.environment}-${var.location}-001"
+  rg_name         = "rg-${var.project}-${var.environment}-${var.location}-001"
+  vnet_name       = "vnet-${var.project}-${var.environment}-${var.location}-001"
+  app_subnet_key  = "snet-app-${var.environment}-${var.location}-001"
+  mgmt_subnet_key = "snet-mgmt-${var.environment}-${var.location}-001"
 
   region_short = {
     eastus        = "eus"
@@ -39,9 +41,6 @@ locals {
     managed_by  = "terraform"
     owner       = var.owner
   }
-
-  app_subnet_key  = "snet-app-${var.environment}-${var.location}-001"
-  mgmt_subnet_key = "snet-mgmt-${var.environment}-${var.location}-001"
 
   subnets = {
     (local.app_subnet_key) = {
