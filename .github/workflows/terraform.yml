@@ -287,6 +287,41 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Debug — identity and storage network rules
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        run: |
+          echo "=== Signed-in identity ==="
+          az account show --query "{subscription:id, tenantId:tenantId, user:user}" -o json
+
+          echo "=== Service principal object ID ==="
+          SP_OBJ_ID=$(az ad sp show --id "$ARM_CLIENT_ID" --query id -o tsv)
+          echo "SP object ID: $SP_OBJ_ID"
+
+          echo "=== Role assignments for SP ==="
+          az role assignment list --assignee "$SP_OBJ_ID" --all \
+            --query "[].{role:roleDefinitionName, scope:scope}" -o table
+
+          echo "=== Storage account network rules ==="
+          SA_NAME=$(az storage account list \
+            --resource-group rg-opella-prod-centralus-001 \
+            --query "[0].name" -o tsv 2>/dev/null || echo "rg not found yet")
+          if [[ "$SA_NAME" != "rg not found yet" && -n "$SA_NAME" ]]; then
+            az storage account show --name "$SA_NAME" \
+              --resource-group rg-opella-prod-centralus-001 \
+              --query "networkRuleSet" -o json
+          else
+            echo "Storage account not found (first run or RG not created yet)"
+          fi
+
       - name: Terraform Init
         env:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
