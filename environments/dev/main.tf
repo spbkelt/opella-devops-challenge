@@ -125,9 +125,9 @@ resource "azurerm_storage_account" "this" {
   account_replication_type = var.storage_replication_type
   account_kind             = "StorageV2"
 
-  shared_access_key_enabled       = var.storage_shared_access_key_enabled
-  https_traffic_only_enabled      = true
-  min_tls_version                 = "TLS1_2"
+  shared_access_key_enabled  = var.storage_shared_access_key_enabled
+  https_traffic_only_enabled = true
+  min_tls_version            = "TLS1_2"
   # See environments/prod/main.tf for why this must be true.
   public_network_access_enabled   = true
   allow_nested_items_to_be_public = false

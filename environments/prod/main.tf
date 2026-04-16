@@ -109,9 +109,9 @@ resource "azurerm_storage_account" "this" {
   account_replication_type = var.storage_replication_type
   account_kind             = "StorageV2"
 
-  shared_access_key_enabled       = var.storage_shared_access_key_enabled
-  https_traffic_only_enabled      = true
-  min_tls_version                 = "TLS1_2"
+  shared_access_key_enabled  = var.storage_shared_access_key_enabled
+  https_traffic_only_enabled = true
+  min_tls_version            = "TLS1_2"
   # Must be true so the CI runner can reach the blob data-plane endpoint to
   # create the container. public_network_access_enabled=false blocks all public
   # internet traffic at the network layer before AAD auth or network rules are
