@@ -15,7 +15,6 @@ enable_network_watcher = false
 
 vm_size        = "Standard_D2s_v3"
 admin_username = "azureuser"
-# admin_ssh_public_key — supply via TF_VAR_admin_ssh_public_key or CI secret.
 
 # Restrict to your corporate VPN or Bastion subnet CIDR.
 # Example: allowed_ssh_cidr = "10.10.0.0/24"

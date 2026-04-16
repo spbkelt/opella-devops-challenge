@@ -13,7 +13,6 @@ subnet_cidrs = {
 }
 
 admin_username = "azureuser"
-# admin_ssh_public_key is not used in dev — a TLS key is generated automatically.
 
 # Allow SSH from anywhere in dev. Tighten to your office/VPN IP for real deployments.
 allowed_ssh_cidr = "*"

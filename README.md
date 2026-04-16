@@ -204,7 +204,6 @@ The workflow exports these environment variables to Terraform jobs:
 - `ARM_SUBSCRIPTION_ID`
 - `ARM_USE_OIDC=true`
 - `ARM_USE_AZUREAD=true`
-- `TF_VAR_admin_ssh_public_key`
 - `TF_IN_AUTOMATION=true`
 - `TF_INPUT=0`
 
