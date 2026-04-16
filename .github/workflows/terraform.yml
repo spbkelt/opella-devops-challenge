@@ -1,6 +1,14 @@
 name: Terraform
 
 on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target environment (dev or prod)'
+        required: true
+        default: 'dev'
+        type: choice
+        options: [dev, prod]
   push:
     branches:
       - develop
@@ -48,7 +56,10 @@ jobs:
           RUN_PLAN="false"
           RUN_APPLY="false"
 
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TARGET="${{ github.event.inputs.target }}"
+            RUN_PLAN="true"
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
             RUN_PLAN="true"
             if [[ "${{ github.base_ref }}" == "develop" ]]; then
               TARGET="dev"
