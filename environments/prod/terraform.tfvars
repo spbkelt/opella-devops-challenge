@@ -25,7 +25,7 @@ os_disk_storage_account_type = "Premium_LRS"
 os_disk_size_gb              = 64
 
 storage_replication_type          = "ZRS"
-storage_shared_access_key_enabled = true # Use Azure AD (RBAC) in production.
+storage_shared_access_key_enabled = false # RBAC only; shared-key access disabled in production.
 
 vm_image_publisher = "Canonical"
 vm_image_offer     = "0001-com-ubuntu-server-jammy"
