@@ -100,6 +100,7 @@ resource "azurerm_storage_account" "this" {
   #checkov:skip=CKV2_AZURE_21:Blob read logging is implemented via azurerm_monitor_diagnostic_setting.storage_blob; azurerm 3.x does not expose blob_properties.logging for StorageV2.
   #checkov:skip=CKV2_AZURE_1:Customer Managed Key requires Key Vault integration; deferred as out-of-scope for this challenge.
   #checkov:skip=CKV2_AZURE_33:Private endpoint requires additional infrastructure (Private DNS Zone, subnet delegation); deferred as out-of-scope for this challenge.
+  #checkov:skip=CKV_AZURE_35:Deny policy is enforced by azurerm_storage_account_network_rules after container creation; inline Allow is intentional to unblock the Terraform runner.
   name                     = local.storage_account_name
   resource_group_name      = azurerm_resource_group.this.name
   location                 = azurerm_resource_group.this.location
