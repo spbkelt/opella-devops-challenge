@@ -128,7 +128,7 @@ jobs:
           soft_fail: false
 
   plan:
-    name: Plan (${{ needs.detect.outputs.target }})
+    name: Plan
     runs-on: ubuntu-latest
     needs: [detect, lint]
     if: needs.detect.outputs.run_plan == 'true' && needs.detect.outputs.target != ''
