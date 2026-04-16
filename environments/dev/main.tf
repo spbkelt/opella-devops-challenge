@@ -172,14 +172,26 @@ resource "azurerm_storage_account_network_rules" "this" {
   virtual_network_subnet_ids = [module.vnet.subnet_ids[local.app_subnet_key]]
   ip_rules                   = var.storage_allowed_ip_rules
 
-  depends_on = [azurerm_storage_container.data]
+  depends_on = [null_resource.storage_container]
 }
 
-resource "azurerm_storage_container" "data" {
-  #checkov:skip=CKV2_AZURE_21:Blob logging is configured on the parent storage account via blob_properties.logging.
-  name                  = local.storage_container
-  storage_account_name  = azurerm_storage_account.this.name
-  container_access_type = "private"
+# See environments/prod/main.tf for the full explanation of this pattern.
+resource "null_resource" "storage_container" {
+  triggers = {
+    storage_account_id = azurerm_storage_account.this.id
+    container_name     = local.storage_container
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      az rest \
+        --method put \
+        --url "${azurerm_storage_account.this.id}/blobServices/default/containers/${local.storage_container}?api-version=2023-01-01" \
+        --body '{"properties":{"publicAccess":"None"}}'
+    EOT
+  }
+
+  depends_on = [azurerm_storage_account.this]
 }
 
 resource "azurerm_log_analytics_workspace" "this" {
