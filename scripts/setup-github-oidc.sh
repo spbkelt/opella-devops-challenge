@@ -206,7 +206,6 @@ Add these GitHub REPOSITORY secrets:
   AZURE_CLIENT_ID=${APP_ID}
   AZURE_TENANT_ID=${TENANT_ID}
   AZURE_SUBSCRIPTION_ID=${SUBSCRIPTION_ID}
-  VM_SSH_PUBLIC_KEY=<your SSH public key>
 
 Federated subject claims configured:
   ${PR_SUBJECT}
@@ -219,7 +218,6 @@ Use these in workflow jobs:
   ARM_SUBSCRIPTION_ID: \${{ secrets.AZURE_SUBSCRIPTION_ID }}
   ARM_USE_OIDC: true
   ARM_USE_AZUREAD: true
-  TF_VAR_admin_ssh_public_key: \${{ secrets.VM_SSH_PUBLIC_KEY }}
   TF_IN_AUTOMATION: true
   TF_INPUT: 0
 
