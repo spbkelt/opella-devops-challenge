@@ -19,6 +19,12 @@ SUBSCRIPTION_ID="${SUBSCRIPTION_ID:-}"
 TENANT_ID="${TENANT_ID:-}"
 DEV_RG="${DEV_RG:-}"
 PROD_RG="${PROD_RG:-}"
+# Per-environment backend storage (preferred).
+DEV_TFSTATE_RG="${DEV_TFSTATE_RG:-}"
+DEV_TFSTATE_SA="${DEV_TFSTATE_SA:-}"
+PROD_TFSTATE_RG="${PROD_TFSTATE_RG:-}"
+PROD_TFSTATE_SA="${PROD_TFSTATE_SA:-}"
+# Legacy single-account fallback (kept for backwards compatibility).
 TFSTATE_RG="${TFSTATE_RG:-}"
 TFSTATE_SA="${TFSTATE_SA:-}"
 ALLOW_SUBSCRIPTION_SCOPE="${ALLOW_SUBSCRIPTION_SCOPE:-false}"
@@ -183,15 +189,37 @@ if [[ -z "$DEV_RG" || -z "$PROD_RG" ]]; then
   fi
 fi
 
-if [[ -n "$TFSTATE_RG" && -n "$TFSTATE_SA" ]]; then
+# Resolve per-environment values, falling back to the legacy single-account vars.
+_dev_tfstate_rg="${DEV_TFSTATE_RG:-${TFSTATE_RG:-}}"
+_dev_tfstate_sa="${DEV_TFSTATE_SA:-${TFSTATE_SA:-}}"
+_prod_tfstate_rg="${PROD_TFSTATE_RG:-${TFSTATE_RG:-}}"
+_prod_tfstate_sa="${PROD_TFSTATE_SA:-${TFSTATE_SA:-}}"
+
+_storage_role_missing=false
+
+if [[ -n "$_dev_tfstate_rg" && -n "$_dev_tfstate_sa" ]]; then
   create_role_assignment \
     "$SP_OBJECT_ID" \
     "Storage Blob Data Contributor" \
-    "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${TFSTATE_RG}/providers/Microsoft.Storage/storageAccounts/${TFSTATE_SA}"
+    "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${_dev_tfstate_rg}/providers/Microsoft.Storage/storageAccounts/${_dev_tfstate_sa}"
 else
-  warn "TFSTATE_RG / TFSTATE_SA not set; Storage Blob Data Contributor was NOT assigned."
-  warn "Terraform init against the AzureRM backend may fail until this role is added."
-  warn "Rerun with: TFSTATE_RG=<rg> TFSTATE_SA=<storage-account> ./scripts/setup-github-oidc.sh"
+  warn "DEV_TFSTATE_RG / DEV_TFSTATE_SA not set; Storage Blob Data Contributor NOT assigned for dev backend."
+  _storage_role_missing=true
+fi
+
+if [[ -n "$_prod_tfstate_rg" && -n "$_prod_tfstate_sa" ]]; then
+  create_role_assignment \
+    "$SP_OBJECT_ID" \
+    "Storage Blob Data Contributor" \
+    "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${_prod_tfstate_rg}/providers/Microsoft.Storage/storageAccounts/${_prod_tfstate_sa}"
+else
+  warn "PROD_TFSTATE_RG / PROD_TFSTATE_SA not set; Storage Blob Data Contributor NOT assigned for prod backend."
+  _storage_role_missing=true
+fi
+
+if [[ "$_storage_role_missing" == "true" ]]; then
+  warn "Terraform init will fail (403) until Storage Blob Data Contributor is assigned on all backends."
+  warn "Rerun with: DEV_TFSTATE_RG=<rg> DEV_TFSTATE_SA=<sa> PROD_TFSTATE_RG=<rg> PROD_TFSTATE_SA=<sa> $0"
 fi
 
 cat <<EOF
@@ -225,4 +253,10 @@ Notes:
   - GitHub Environments are used for deployment protection rules and production approval.
   - Plan jobs in the current workflow use REPOSITORY secrets, not environment secrets.
   - OIDC does not require an Azure client secret for GitHub Actions.
+  - Re-run with DEV_TFSTATE_RG / DEV_TFSTATE_SA / PROD_TFSTATE_RG / PROD_TFSTATE_SA
+    to assign Storage Blob Data Contributor on each backend storage account.
+    Example:
+      DEV_TFSTATE_RG=tfstate-dev-rg   DEV_TFSTATE_SA=tfstatedev6584539cb1 \\
+      PROD_TFSTATE_RG=tfstate-prod-rg PROD_TFSTATE_SA=tfstateprod6584539cb1 \\
+      OWNER=<owner> REPO=<repo> ./scripts/setup-github-oidc.sh
 EOF
