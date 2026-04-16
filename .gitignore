@@ -35,3 +35,10 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+# Local act simulation — not part of the tracked codebase
+.actrc
+.secrets.act
+.secrets.act.template
+scripts/simulate-ci.sh
+scripts/ci-events/
