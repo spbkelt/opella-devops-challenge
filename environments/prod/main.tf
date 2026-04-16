@@ -124,16 +124,32 @@ resource "azurerm_storage_account" "this" {
     }
   }
 
+  # Keep default_action = "Allow" here so the account is open during initial
+  # provisioning. The actual Deny policy is enforced by the separate
+  # azurerm_storage_account_network_rules resource once the container exists.
+  # ignore_changes prevents this inline block from fighting with that resource
+  # on subsequent plans (the provider does not detect removal of network_rules
+  # as a diff, so the account must be actively updated to Allow first).
+  network_rules {
+    default_action = "Allow"
+    bypass         = ["AzureServices"]
+  }
+
+  lifecycle {
+    ignore_changes = [network_rules]
+  }
+
   tags = local.common_tags
 }
 
 # Network rules are applied after the container is created.
 #
-# Inlining network_rules in azurerm_storage_account locks the data plane before
-# Terraform can create the container, causing a 403 AuthorizationFailure from the
-# GitHub Actions runner (not in the allowed subnet). Separating into
-# azurerm_storage_account_network_rules with depends_on ensures the account is
-# open during resource creation and locked immediately after.
+# azurerm_storage_account_network_rules is the authoritative source for the
+# Deny policy. The storage account's inline network_rules block is set to Allow
+# so the provider detects and applies an update on any existing account that
+# previously had Deny rules inlined. ignore_changes on network_rules prevents
+# subsequent plans from reverting this block after the separate resource locks
+# down the account.
 resource "azurerm_storage_account_network_rules" "this" {
   #checkov:skip=CKV_AZURE_59:Network rules are enforced; this resource applies Deny-by-default after container creation.
   storage_account_id         = azurerm_storage_account.this.id

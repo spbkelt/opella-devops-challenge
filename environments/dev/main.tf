@@ -146,6 +146,16 @@ resource "azurerm_storage_account" "this" {
     expiration_action = "Log"
   }
 
+  # See environments/prod/main.tf for the full explanation of this pattern.
+  network_rules {
+    default_action = "Allow"
+    bypass         = ["AzureServices"]
+  }
+
+  lifecycle {
+    ignore_changes = [network_rules]
+  }
+
   tags = local.common_tags
 }
 
